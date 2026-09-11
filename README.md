@@ -1,3 +1,4 @@
+<img width="644" height="610" alt="屏幕截图 2026-09-11 151955" src="https://github.com/user-attachments/assets/0cfb2555-ce83-40b1-b926-26f12b71f5ab" />
 # Native Pomodoro for Windows
 
 一个轻量、原生、可换外观的 Windows 番茄钟。窗口直接沿图片轮廓显示，没有标题栏和方形背景；专注阶段按扇形平滑推进，休息阶段自动切换为黑白。
