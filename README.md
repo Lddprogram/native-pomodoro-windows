@@ -27,10 +27,10 @@
 
 Release 中还提供四个本地成品作为外观示例：
 
-- `番茄钟.exe`
-- `地球猫咪番茄钟.exe`
-- `蓝莓番茄钟.exe`
-- `珍珠番茄钟.exe`
+- `Tomato-Pomodoro.exe`：番茄外观
+- `Earth-Kitty-Pomodoro.exe`：地球猫咪外观
+- `Blueberry-Pomodoro.exe`：蓝莓外观
+- `Pearl-Pomodoro.exe`：珍珠外观
 
 这些附件用于展示同一套程序如何适配不同图片。示例图片不属于 MIT 源码许可证；再次发布或用于商业用途前，请自行确认相应图片的使用授权。
 
