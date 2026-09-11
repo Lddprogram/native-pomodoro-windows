@@ -1,0 +1,34 @@
+# Build outputs
+dist/
+build/
+*.exe
+*.pdb
+
+# Local variants and private artwork
+assets/
+快速启动版/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.ico
+
+# Legacy local prototypes
+app.html
+pomodoro.py
+pomodoro_settings.json
+prepare_variant_assets.py
+web_app.py
+启动番茄钟.bat
+
+# Python and editor caches
+__pycache__/
+*.py[cod]
+.vs/
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
