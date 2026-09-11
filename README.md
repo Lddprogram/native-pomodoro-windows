@@ -15,6 +15,12 @@
 - 无安装器、无联网、无遥测，编译后为单个 EXE
 - Per-Monitor V2 高 DPI 支持
 
+## 直接下载
+
+不想自行编译，可以从 [Releases](https://github.com/Lddprogram/native-pomodoro-windows/releases/latest) 下载预构建的番茄主题 EXE。程序是绿色单文件版本，下载后直接双击运行，不需要安装。
+
+预构建版本使用番茄外观；通过下方构建脚本可以换成自己的透明 PNG，同时保留相同的计时、轮廓窗口、扇形进度和统计功能。
+
 ## 系统要求
 
 - Windows 10 或 Windows 11
