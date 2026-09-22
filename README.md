@@ -61,6 +61,17 @@ Windows 11 通常不需要安装任何额外依赖。构建脚本会自动查找
 
 生成文件位于 `dist\我的番茄钟.exe`。
 
+要同时使用图片缩略图作为 EXE 图标，先生成多分辨率 ICO，再将它传给构建脚本：
+
+```powershell
+python .\create_icon.py "C:\图片\my-tomato.png" ".\my-tomato.ico"
+.\build.ps1 -ImagePath "C:\图片\my-tomato.png" `
+  -IconPath ".\my-tomato.ico" `
+  -Name "我的番茄钟"
+```
+
+生成图标需要 Pillow：`python -m pip install Pillow`。
+
 若系统执行策略阻止脚本，可只为本次构建运行：
 
 ```powershell
@@ -114,6 +125,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 `
 |-- native_timer.cs    # 原生窗口、计时、绘制、设置与统计
 |-- app.manifest       # Windows 版本与高 DPI 声明
 |-- build.ps1          # 单文件构建脚本
+|-- create_icon.py     # 由透明图片生成多尺寸 Windows 图标
 |-- LICENSE            # MIT License
 `-- README.md          # 使用说明
 ```

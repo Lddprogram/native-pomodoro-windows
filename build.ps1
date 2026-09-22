@@ -7,6 +7,8 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$Name = "NativePomodoro",
 
+    [string]$IconPath,
+
     [string]$OutputDirectory
 )
 
@@ -19,6 +21,14 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 $sourcePath = Join-Path $PSScriptRoot "native_timer.cs"
 $manifestPath = Join-Path $PSScriptRoot "app.manifest"
 $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
+$resolvedIcon = $null
+
+if (-not [string]::IsNullOrWhiteSpace($IconPath)) {
+    $resolvedIcon = (Resolve-Path -LiteralPath $IconPath).Path
+    if ([IO.Path]::GetExtension($resolvedIcon).ToLowerInvariant() -ne ".ico") {
+        throw "Icon must be an ICO file."
+    }
+}
 
 if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
     throw "Source file not found: $sourcePath"
@@ -62,6 +72,10 @@ $arguments = @(
     "/reference:System.Windows.Forms.dll",
     $sourcePath
 )
+
+if ($resolvedIcon) {
+    $arguments = $arguments[0..4] + ("/win32icon:" + $resolvedIcon) + $arguments[5..($arguments.Length - 1)]
+}
 
 & $compiler $arguments
 if ($LASTEXITCODE -ne 0) {
