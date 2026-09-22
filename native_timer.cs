@@ -62,6 +62,14 @@ internal sealed class TomatoTimerForm : Form
     private ToolStripMenuItem statusItem;
     private ToolStripMenuItem statsItem;
     private ToolStripMenuItem topMostItem;
+    private ToolStripMenuItem rhythmMenu;
+    private ToolStripMenuItem rhythm50Item;
+    private ToolStripMenuItem rhythm25Item;
+    private ToolStripMenuItem countMenu;
+    private ToolStripMenuItem infiniteItem;
+    private ToolStripMenuItem sizeMenu;
+    private readonly Dictionary<int, ToolStripMenuItem> countItems = new Dictionary<int, ToolStripMenuItem>();
+    private readonly Dictionary<int, ToolStripMenuItem> sizeItems = new Dictionary<int, ToolStripMenuItem>();
 
     public TomatoTimerForm()
     {
@@ -414,34 +422,35 @@ internal sealed class TomatoTimerForm : Form
     {
         menu.RenderMode = ToolStripRenderMode.System;
         menu.ShowImageMargin = false;
+        menu.ShowCheckMargin = true;
         startItem = AddItem(menu.Items, "开始", delegate { Toggle(); });
         AddItem(menu.Items, "重置", delegate { ResetTimer(); });
         AddItem(menu.Items, "跳过当前阶段", delegate { Skip(); });
         menu.Items.Add(new ToolStripSeparator());
 
-        ToolStripMenuItem rhythm = new ToolStripMenuItem("专注节奏");
-        AddItem(rhythm.DropDownItems, "50 分钟 / 10 分钟", delegate { preset50 = true; ResetTimer(); SaveState(); });
-        AddItem(rhythm.DropDownItems, "25 分钟 / 5 分钟", delegate { preset50 = false; ResetTimer(); SaveState(); });
-        menu.Items.Add(rhythm);
+        rhythmMenu = new ToolStripMenuItem("专注节奏");
+        rhythm50Item = AddItem(rhythmMenu.DropDownItems, "50 分钟 / 10 分钟", delegate { SetRhythm(true); });
+        rhythm25Item = AddItem(rhythmMenu.DropDownItems, "25 分钟 / 5 分钟", delegate { SetRhythm(false); });
+        menu.Items.Add(rhythmMenu);
 
-        ToolStripMenuItem count = new ToolStripMenuItem("执行次数");
+        countMenu = new ToolStripMenuItem("执行次数");
         int[] counts = new int[] { 1, 2, 4, 8 };
         foreach (int value in counts)
         {
             int captured = value;
-            AddItem(count.DropDownItems, value.ToString() + " 次", delegate { repetitions = captured; infinite = false; SaveState(); });
+            countItems[value] = AddItem(countMenu.DropDownItems, value.ToString() + " 次", delegate { SetRepetitions(captured); });
         }
-        AddItem(count.DropDownItems, "无限循环", delegate { infinite = true; SaveState(); });
-        menu.Items.Add(count);
+        infiniteItem = AddItem(countMenu.DropDownItems, "无限循环", delegate { SetInfinite(); });
+        menu.Items.Add(countMenu);
 
-        ToolStripMenuItem size = new ToolStripMenuItem("大小调节");
+        sizeMenu = new ToolStripMenuItem("大小调节");
         int[] sizes = new int[] { 180, 220, 260, 300, 340, 380, 440, 520, 600, 680 };
         foreach (int value in sizes)
         {
             int captured = value;
-            AddItem(size.DropDownItems, value.ToString() + " px", delegate { SetSize(captured); });
+            sizeItems[value] = AddItem(sizeMenu.DropDownItems, value.ToString() + " px", delegate { SetSize(captured); });
         }
-        menu.Items.Add(size);
+        menu.Items.Add(sizeMenu);
 
         statsItem = new ToolStripMenuItem("专注记录");
         menu.Items.Add(statsItem);
@@ -452,7 +461,7 @@ internal sealed class TomatoTimerForm : Form
         topMostItem = AddItem(menu.Items, "始终置顶", delegate {
             alwaysOnTop = !alwaysOnTop;
             TopMost = alwaysOnTop;
-            topMostItem.Checked = alwaysOnTop;
+            RefreshMenu();
             SaveState();
         });
         topMostItem.CheckOnClick = false;
@@ -473,8 +482,26 @@ internal sealed class TomatoTimerForm : Form
     {
         startItem.Text = running ? "暂停" : "开始";
         topMostItem.Checked = alwaysOnTop;
+        topMostItem.Text = "始终置顶 · " + (alwaysOnTop ? "已开启" : "未开启");
+
+        rhythm50Item.Checked = preset50;
+        rhythm25Item.Checked = !preset50;
+        rhythmMenu.Text = "专注节奏 · " + (preset50 ? "50 / 10" : "25 / 5");
+
+        foreach (KeyValuePair<int, ToolStripMenuItem> pair in countItems)
+            pair.Value.Checked = !infinite && pair.Key == repetitions;
+        infiniteItem.Checked = infinite;
+        countMenu.Text = "执行次数 · " + (infinite ? "无限循环" : repetitions + " 次");
+
+        foreach (KeyValuePair<int, ToolStripMenuItem> pair in sizeItems)
+            pair.Value.Checked = pair.Key == windowSize;
+        sizeMenu.Text = "大小调节 · " + windowSize + " px";
+
         string phaseText = focusPhase ? "专注" : "休息";
-        statusItem.Text = infinite ? string.Format("{0} · 已完成 {1} 次 · 无限", phaseText, completed) : string.Format("{0} · 已完成 {1} / {2} 次", phaseText, completed, repetitions);
+        string rhythmText = preset50 ? "50 / 10" : "25 / 5";
+        statusItem.Text = infinite
+            ? string.Format("当前：{0} · {1} · 已完成 {2} 次 · 无限", phaseText, rhythmText, completed)
+            : string.Format("当前：{0} · {1} · 已完成 {2} / {3} 次", phaseText, rhythmText, completed, repetitions);
         statsItem.DropDownItems.Clear();
         AddStat("今天", delegate(DateTime d) { return d.Date == DateTime.Today; });
         DateTime monday = DateTime.Today.AddDays(-((int)DateTime.Today.DayOfWeek + 6) % 7);
@@ -510,12 +537,50 @@ internal sealed class TomatoTimerForm : Form
         RenderLayered();
     }
 
+    private int FocusMinutes
+    {
+        get { return preset50 ? 50 : 25; }
+    }
+
+    private int BreakMinutes
+    {
+        get { return preset50 ? 10 : 5; }
+    }
+
+    private double PhaseDuration(bool isFocus)
+    {
+        return (isFocus ? FocusMinutes : BreakMinutes) * 60.0;
+    }
+
+    private void SetRhythm(bool useFiftyMinutes)
+    {
+        preset50 = useFiftyMinutes;
+        ResetTimer();
+        RefreshMenu();
+        SaveState();
+    }
+
+    private void SetRepetitions(int value)
+    {
+        repetitions = value;
+        infinite = false;
+        RefreshMenu();
+        SaveState();
+    }
+
+    private void SetInfinite()
+    {
+        infinite = true;
+        RefreshMenu();
+        SaveState();
+    }
+
     private void ResetTimer()
     {
         running = false;
         focusPhase = true;
         completed = 0;
-        total = (preset50 ? 50 : 25) * 60.0;
+        total = PhaseDuration(true);
         remaining = total;
         RenderLayered();
     }
@@ -523,7 +588,7 @@ internal sealed class TomatoTimerForm : Form
     private void Skip()
     {
         focusPhase = !focusPhase;
-        total = (focusPhase ? (preset50 ? 50 : 25) : (preset50 ? 10 : 5)) * 60.0;
+        total = PhaseDuration(focusPhase);
         remaining = total;
         lastTick = DateTime.UtcNow;
         RenderLayered();
@@ -565,12 +630,12 @@ internal sealed class TomatoTimerForm : Form
                 return;
             }
             focusPhase = false;
-            total = (preset50 ? 10 : 5) * 60.0;
+            total = PhaseDuration(false);
         }
         else
         {
             focusPhase = true;
-            total = (preset50 ? 50 : 25) * 60.0;
+            total = PhaseDuration(true);
         }
         remaining = total;
     }
@@ -591,6 +656,7 @@ internal sealed class TomatoTimerForm : Form
         windowSize = size;
         ClientSize = new Size(size, size);
         Location = new Point(center.X - Width / 2, center.Y - Height / 2);
+        RefreshMenu();
         SaveState();
     }
 
